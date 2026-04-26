@@ -17,83 +17,59 @@ const AdminBookings = () => {
 
   useEffect(() => {
     loadAllBookings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAllBookings = async () => {
     try {
       const response = await bookingAPI.getAllBookings();
-      setBookings(response.data);
-      calculateStats(response.data);
-    } catch (error) {
+      const data = response.data;
+      setBookings(data);
+      setStats({
+        total: data.length,
+        confirmed: data.filter(b => b.status === 'confirmed').length,
+        pending: data.filter(b => b.status === 'pending').length,
+        cancelled: data.filter(b => b.status === 'cancelled').length,
+        totalRevenue: data.filter(b => b.status === 'confirmed').reduce((s, b) => s + parseFloat(b.total_price), 0),
+      });
+    } catch {
       toast.error('Failed to load bookings');
-      console.error('Error loading bookings:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateStats = (bookingsData) => {
-    const confirmed = bookingsData.filter(b => b.status === 'confirmed').length;
-    const pending = bookingsData.filter(b => b.status === 'pending').length;
-    const cancelled = bookingsData.filter(b => b.status === 'cancelled').length;
-    const totalRevenue = bookingsData
-      .filter(b => b.status === 'confirmed')
-      .reduce((sum, b) => sum + parseFloat(b.total_price), 0);
-
-    setStats({
-      total: bookingsData.length,
-      confirmed,
-      pending,
-      cancelled,
-      totalRevenue
-    });
-  };
-
   const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
       await bookingAPI.updateStatus(bookingId, { status: newStatus });
-      toast.success(`Booking ${newStatus} successfully`);
+      toast.success(`Booking ${newStatus}`);
       loadAllBookings();
-    } catch (error) {
+    } catch {
       toast.error('Failed to update booking status');
-      console.error('Error updating booking:', error);
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
-    if (filter !== 'all' && booking.status !== filter) return false;
+  const handlePaymentStatusUpdate = async (bookingId, newPaymentStatus) => {
+    try {
+      await bookingAPI.updatePaymentStatus(bookingId, { payment_status: newPaymentStatus });
+      toast.success(`Payment marked as ${newPaymentStatus}`);
+      loadAllBookings();
+    } catch {
+      toast.error('Failed to update payment status');
+    }
+  };
+
+  const filteredBookings = bookings.filter(b => {
+    if (filter !== 'all' && b.status !== filter) return false;
     if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        booking.tour_title?.toLowerCase().includes(searchLower) ||
-        booking.username?.toLowerCase().includes(searchLower) ||
-        booking.tour_location?.toLowerCase().includes(searchLower)
-      );
+      const s = searchTerm.toLowerCase();
+      return b.tour_title?.toLowerCase().includes(s) || b.username?.toLowerCase().includes(s) || b.tour_location?.toLowerCase().includes(s);
     }
     return true;
   });
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatCurrency = (amount) => {
-    return parseFloat(amount).toFixed(2);
-  };
+  const formatDate = d => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  const formatCurrency = a => parseFloat(a).toFixed(2);
+  const getStatusColor = s => ({ confirmed: 'bg-green-100 text-green-800', pending: 'bg-yellow-100 text-yellow-800', cancelled: 'bg-red-100 text-red-800' })[s] || 'bg-gray-100 text-gray-800';
 
   if (loading) {
     return (
@@ -135,7 +111,7 @@ const AdminBookings = () => {
           </div>
           <div className="bg-blue-50 rounded-lg shadow p-4">
             <p className="text-sm text-blue-600">Total Revenue</p>
-            <p className="text-2xl font-bold text-blue-700">${formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-2xl font-bold text-blue-700">Rs{formatCurrency(stats.totalRevenue)}</p>
           </div>
         </div>
 
@@ -196,6 +172,7 @@ const AdminBookings = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">People</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -217,38 +194,39 @@ const AdminBookings = () => {
                         {booking.number_of_people}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
-                        ${formatCurrency(booking.total_price)}
+                        Rs{formatCurrency(booking.total_price)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(booking.status)}`}>
                           {booking.status}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          booking.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                          booking.payment_status === 'failed' ? 'bg-red-100 text-red-800' :
+                          booking.payment_status === 'refunded' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {booking.payment_status}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex space-x-2">
+                        <div className="flex flex-wrap gap-1">
                           {booking.status === 'pending' && (
                             <>
-                              <button
-                                onClick={() => handleStatusUpdate(booking.id, 'confirmed')}
-                                className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                onClick={() => handleStatusUpdate(booking.id, 'cancelled')}
-                                className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
-                              >
-                                Cancel
-                              </button>
+                              <button onClick={() => handleStatusUpdate(booking.id, 'confirmed')} className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs">✓ Confirm</button>
+                              <button onClick={() => handleStatusUpdate(booking.id, 'cancelled')} className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">✕ Cancel</button>
                             </>
                           )}
                           {booking.status === 'confirmed' && (
-                            <button
-                              onClick={() => handleStatusUpdate(booking.id, 'cancelled')}
-                              className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
-                            >
-                              Cancel
-                            </button>
+                            <button onClick={() => handleStatusUpdate(booking.id, 'cancelled')} className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">✕ Cancel</button>
+                          )}
+                          {booking.payment_status !== 'paid' && (
+                            <button onClick={() => handlePaymentStatusUpdate(booking.id, 'paid')} className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">💳 Mark Paid</button>
+                          )}
+                          {booking.payment_status === 'paid' && (
+                            <button onClick={() => handlePaymentStatusUpdate(booking.id, 'refunded')} className="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs">↩ Refund</button>
                           )}
                         </div>
                       </td>

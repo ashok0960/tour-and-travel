@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { tours as toursAPI } from '../services/api';
-
 import toast from 'react-hot-toast';
 
-const AdminTours = () => {
+const AdminTours = ({ user }) => {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,11 +16,10 @@ const AdminTours = () => {
 
   const loadTours = async () => {
     try {
-      const response = await toursAPI.getAll();
+      const response = user?.role === 'vendor' ? await toursAPI.getVendorTours() : await toursAPI.getAll();
       setTours(response.data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load tours');
-      console.error('Error loading tours:', error);
     } finally {
       setLoading(false);
     }
@@ -32,25 +30,19 @@ const AdminTours = () => {
     
     try {
       await toursAPI.delete(selectedTour.id);
-      toast.success('Tour deleted successfully');
+      toast.success('Tour deleted');
       loadTours();
       setShowDeleteModal(false);
       setSelectedTour(null);
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete tour');
-      console.error('Error deleting tour:', error);
     }
   };
 
-  const filteredTours = tours.filter(tour =>
-    tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tour.location.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTours = tours.filter(t =>
+    t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    return `http://127.0.0.1:8000${imagePath}`;
-  };
 
   if (loading) {
     return (
@@ -120,11 +112,12 @@ const AdminTours = () => {
                 <div className="flex flex-col md:flex-row">
                   {/* Tour Image */}
                   <div className="md:w-48 h-48 md:h-auto">
-                    {getImageUrl(tour.image) ? (
+                    {tour.image_url ? (
                       <img
-                        src={getImageUrl(tour.image)}
+                        src={tour.image_url}
                         alt={tour.title}
                         className="w-full h-full object-cover"
+                        onError={e => { e.target.style.display = 'none'; }}
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">

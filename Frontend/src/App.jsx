@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-// Components
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
+import VendorRoute from './components/VendorRoute';
 import Layout from './components/Layout';
 
-// Pages
 import Home from './pages/Home';
 import TourList from './pages/TourList';
 import TourDetail from './pages/TourDetail';
@@ -18,9 +17,18 @@ import Dashboard from './pages/Dashboard';
 import MyBookings from './pages/MyBookings';
 import AdminTours from './pages/AdminTours';
 import AdminBookings from './pages/AdminBookings';
+import AdminUsers from './pages/AdminUsers';
 import AddEditTour from './pages/AddEditTour';
+import AdminDashboard from './pages/AdminDashboard';
+import VendorDashboard from './pages/VendorDashboard';
+import AdminSupport from './pages/AdminSupport';
+import VendorSupport from './pages/VendorSupport';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
+import PaymentsMethod from './pages/PaymentsMethod';
+import KhaltiVerify from './pages/KhaltiVerify';
+import Profile from './pages/Profile';
 
-// API
 import { authAPI } from './services/api';
 
 function App() {
@@ -36,18 +44,21 @@ function App() {
       } catch {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        setUser(null);
       }
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    const init = async () => {
-      await checkAuth();
+    checkAuth();
+    // Refresh profile when user returns to tab (catches role changes while logged in)
+    const handleFocus = () => {
+      if (localStorage.getItem('access_token')) checkAuth();
     };
-    init();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
-
 
   if (loading) {
     return (
@@ -64,57 +75,58 @@ function App() {
     <Router>
       <Layout user={user} setUser={setUser}>
         <Toaster position="top-right" />
-
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
+          {/* Public */}
+          <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'vendor' ? '/vendor/dashboard' : '/tours'} replace /> : <Home user={user} />} />
           <Route path="/tours" element={<TourList />} />
           <Route path="/tours/:id" element={<TourDetail user={user} />} />
-          <Route path="/login" element={
-            user ? <Navigate to="/dashboard" /> : <Login setUser={setUser} />
-          } />
-          <Route path="/register" element={
-            user ? <Navigate to="/dashboard" /> : <Register />
-          } />
+          <Route path="/login" element={user ? <Navigate to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'vendor' ? '/vendor/dashboard' : '/tours'} replace /> : <Login setUser={setUser} />} />
+          <Route path="/register" element={user ? <Navigate to="/tours" replace /> : <Register />} />
 
-          {/* User Routes */}
+          {/* User - redirect superusers to their dashboards */}
           <Route path="/dashboard" element={
             <PrivateRoute user={user}>
-              <Dashboard user={user} />
+              {user?.role === 'admin'
+                ? <Navigate to="/admin/dashboard" replace />
+                : user?.role === 'vendor'
+                ? <Navigate to="/vendor/dashboard" replace />
+                : <Dashboard user={user} />}
             </PrivateRoute>
           } />
           <Route path="/my-bookings" element={
             <PrivateRoute user={user}>
-              <MyBookings />
+              {['admin', 'vendor'].includes(user?.role)
+                ? <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'} replace />
+                : <MyBookings />}
             </PrivateRoute>
           } />
 
-          {/* Admin Routes */}
-          <Route path="/admin/tours" element={
-            <AdminRoute user={user}>
-              <AdminTours />
-            </AdminRoute>
-          } />
-          <Route path="/admin/tours/add" element={
-            <AdminRoute user={user}>
-              <AddEditTour />
-            </AdminRoute>
-          } />
-          <Route path="/admin/tours/edit/:id" element={
-            <AdminRoute user={user}>
-              <AddEditTour />
-            </AdminRoute>
-          } />
-          <Route path="/admin/bookings" element={
-            <AdminRoute user={user}>
-              <AdminBookings />
-            </AdminRoute>
-          } />
+          {/* Vendor - only for vendor role, NOT admin */}
+          <Route path="/vendor/dashboard" element={<VendorRoute user={user}><VendorDashboard user={user} /></VendorRoute>} />
+          <Route path="/vendor/tours/add" element={<VendorRoute user={user}><AddEditTour /></VendorRoute>} />
+          <Route path="/vendor/tours/edit/:id" element={<VendorRoute user={user}><AddEditTour /></VendorRoute>} />
+
+          {/* Admin */}
+          <Route path="/admin/dashboard" element={<AdminRoute user={user}><AdminDashboard user={user} /></AdminRoute>} />
+          <Route path="/admin/tours" element={<AdminRoute user={user}><AdminTours user={user} /></AdminRoute>} />
+          <Route path="/admin/tours/add" element={<AdminRoute user={user}><AddEditTour /></AdminRoute>} />
+          <Route path="/admin/tours/edit/:id" element={<AdminRoute user={user}><AddEditTour /></AdminRoute>} />
+          <Route path="/admin/bookings" element={<AdminRoute user={user}><AdminBookings /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute user={user}><AdminUsers currentUser={user} /></AdminRoute>} />
+          <Route path="/admin/support" element={<AdminRoute user={user}><AdminSupport /></AdminRoute>} />
+          <Route path="/vendor/support" element={<VendorRoute user={user}><VendorSupport /></VendorRoute>} />
+
+          <Route path="/profile" element={<PrivateRoute user={user}><Profile user={user} setUser={setUser} /></PrivateRoute>} />
+
+          {/* Payment */}
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
+          <Route path="/payment/khalti/verify" element={<KhaltiVerify />} />
+          <Route path="/paymentmethod" element={<PaymentsMethod />} />
         </Routes>
       </Layout>
     </Router>
   );
 }
-
 
 export default App;

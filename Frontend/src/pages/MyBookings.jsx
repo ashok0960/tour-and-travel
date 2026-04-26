@@ -1,71 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { bookingAPI } from '../services/api';
+import api from '../services/api';
 import toast from 'react-hot-toast';
+import PaymentsMethod from './PaymentsMethod';
 
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, confirmed, pending, cancelled
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+
 
   useEffect(() => {
-    loadBookings();
+    const run = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      const paymentStatus = params.get('payment');
+
+      if (sessionId) {
+        try { await api.post('/payments/verify-session/', { session_id: sessionId }); } catch {}
+        window.history.replaceState({}, '', window.location.pathname);
+        toast.success('🎉 Payment Successful! Your booking is confirmed.', { id: 'payment-success' });
+      } else if (paymentStatus === 'success') {
+        toast.success('🎉 Payment Successful! Your booking is confirmed.', { id: 'payment-success' });
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
+      await loadBookings();
+    };
+    run();
+
+    const handleFocus = () => loadBookings();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const loadBookings = async () => {
     try {
       const response = await bookingAPI.getMyBookings();
       setBookings(response.data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load bookings');
-      console.error('Error loading bookings:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+  const handlePaymentClick = (booking) => {
+    setSelectedBooking(booking);
+    setShowPaymentModal(true);
   };
 
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'confirmed':
-        return '✅';
-      case 'pending':
-        return '⏳';
-      case 'cancelled':
-        return '❌';
-      default:
-        return '📅';
-    }
-  };
 
-  const filteredBookings = bookings.filter(booking => {
-    if (filter === 'all') return true;
-    return booking.status === filter;
-  });
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatCurrency = (amount) => {
-    return parseFloat(amount).toFixed(2);
-  };
+  const STATUS_COLOR = { confirmed: 'bg-green-100 text-green-800 border-green-200', pending: 'bg-yellow-100 text-yellow-800 border-yellow-200', cancelled: 'bg-red-100 text-red-800 border-red-200' };
+  const STATUS_ICON = { confirmed: '✅', pending: '⏳', cancelled: '❌' };
+  const filteredBookings = filter === 'all' ? bookings : bookings.filter(b => b.status === filter);
+  const formatDate = d => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const formatCurrency = a => parseFloat(a).toFixed(2);
 
   if (loading) {
     return (
@@ -91,41 +84,37 @@ const MyBookings = () => {
         <div className="flex flex-wrap gap-2 mb-6">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg transition ${
-              filter === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-4 py-2 rounded-lg transition ${filter === 'all'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
           >
             All ({bookings.length})
           </button>
           <button
             onClick={() => setFilter('confirmed')}
-            className={`px-4 py-2 rounded-lg transition ${
-              filter === 'confirmed'
-                ? 'bg-green-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-4 py-2 rounded-lg transition ${filter === 'confirmed'
+              ? 'bg-green-600 text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
           >
             Confirmed ({bookings.filter(b => b.status === 'confirmed').length})
           </button>
           <button
             onClick={() => setFilter('pending')}
-            className={`px-4 py-2 rounded-lg transition ${
-              filter === 'pending'
-                ? 'bg-yellow-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-4 py-2 rounded-lg transition ${filter === 'pending'
+              ? 'bg-yellow-600 text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
           >
             Pending ({bookings.filter(b => b.status === 'pending').length})
           </button>
           <button
             onClick={() => setFilter('cancelled')}
-            className={`px-4 py-2 rounded-lg transition ${
-              filter === 'cancelled'
-                ? 'bg-red-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-4 py-2 rounded-lg transition ${filter === 'cancelled'
+              ? 'bg-red-600 text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
           >
             Cancelled ({bookings.filter(b => b.status === 'cancelled').length})
           </button>
@@ -137,9 +126,9 @@ const MyBookings = () => {
             <div className="text-6xl mb-4">📅</div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">No Bookings Found</h2>
             <p className="text-gray-600 mb-6">
-              {filter === 'all' 
-                ? "You haven't made any bookings yet" 
-                : `You don't have any Rs{filter} bookings`}
+              {filter === 'all'
+                ? "You haven't made any bookings yet"
+                : `You don't have any ${filter} bookings`}
             </p>
             <Link to="/tours" className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 inline-block">
               Browse Tours
@@ -151,9 +140,9 @@ const MyBookings = () => {
               <div key={booking.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <div className="flex flex-col md:flex-row">
                   {/* Booking Status Sidebar */}
-                  <div className={`md:w-48 p-4 ${getStatusColor(booking.status)} border-r`}>
+                  <div className={`md:w-48 p-4 ${STATUS_COLOR[booking.status] || 'bg-gray-100 text-gray-800'} border-r`}>
                     <div className="text-center">
-                      <div className="text-3xl mb-2">{getStatusIcon(booking.status)}</div>
+                      <div className="text-3xl mb-2">{STATUS_ICON[booking.status] || '📅'}</div>
                       <p className="font-semibold uppercase text-sm">{booking.status}</p>
                       <p className="text-xs mt-2">Booking ID: #{booking.id}</p>
                     </div>
@@ -225,40 +214,98 @@ const MyBookings = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t">
+                    <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t items-center">
+                      {/* Payment status badge */}
+                      <span className={`text-xs px-3 py-1 rounded-full font-semibold border ${
+                        booking.payment_status === 'paid' ? 'bg-green-50 text-green-700 border-green-200' :
+                        booking.payment_status === 'failed' ? 'bg-red-50 text-red-700 border-red-200' :
+                        booking.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        'bg-yellow-50 text-yellow-700 border-yellow-200'
+                      }`}>
+                        💳 {booking.payment_status === 'paid' ? 'Paid' : booking.payment_status === 'failed' ? 'Payment Failed' : booking.status === 'confirmed' ? 'Confirmed - Pay Now' : 'Payment Pending'}
+                      </span>
+
                       <Link
                         to={`/tours/${booking.tour}`}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
                       >
-                        View Tour Details
+                        View Tour
                       </Link>
-                      {booking.status === 'pending' && (
+
+                      {/* Only show these if NOT paid+confirmed */}
+                      {!(booking.payment_status === 'paid' && booking.status === 'confirmed') && (
+                        <>
+                          {booking.status === 'pending' && (
+                            <button
+                              onClick={async () => {
+                                if (window.confirm('Are you sure you want to cancel this booking?')) {
+                                  try {
+                                    await bookingAPI.updateStatus(booking.id, { status: 'cancelled' });
+                                    toast.success('Booking cancelled');
+                                    loadBookings();
+                                  } catch {
+                                    toast.error('Failed to cancel booking');
+                                  }
+                                }
+                              }}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          {booking.payment_status !== 'paid' && booking.status !== 'cancelled' && (
+                            <button
+                              onClick={() => handlePaymentClick(booking)}
+                              className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition flex items-center gap-2 text-sm font-semibold shadow-sm"
+                            >
+                              💳 Pay Now
+                            </button>
+                          )}
+                          {booking.payment_status !== 'paid' && (
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm('Delete this booking?')) return;
+                                try {
+                                  await bookingAPI.deleteBooking(booking.id);
+                                  toast.success('Booking deleted');
+                                  loadBookings();
+                                } catch (e) {
+                                  toast.error(e.response?.data?.error || 'Failed to delete booking');
+                                }
+                              }}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-red-100 hover:text-red-700 transition text-sm font-semibold"
+                            >
+                              🗑️ Delete
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      {/* Paid + confirmed: only delete allowed */}
+                      {booking.payment_status === 'paid' && booking.status === 'confirmed' && (
                         <button
                           onClick={async () => {
-                            if (window.confirm('Are you sure you want to cancel this booking?')) {
-                              try {
-                                await bookingAPI.updateStatus(booking.id, { status: 'cancelled' });
-                                toast.success('Booking cancelled successfully');
-                                loadBookings();
-                              } catch {
-                                toast.error('Failed to cancel booking');
-                              }
+                            if (!window.confirm('Delete this booking?')) return;
+                            try {
+                              await bookingAPI.deleteBooking(booking.id);
+                              toast.success('Booking deleted');
+                              loadBookings();
+                            } catch (e) {
+                              toast.error(e.response?.data?.error || 'Failed to delete booking');
                             }
                           }}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-red-100 hover:text-red-700 transition text-sm font-semibold"
                         >
-                          Cancel Booking
+                          🗑️ Delete
                         </button>
                       )}
-                      {booking.status === 'confirmed' && (
-                        <button
-                          onClick={() => {
-                            toast.success('Payment feature coming soon!');
-                          }}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                        >
-                          Payment Receipt
-                        </button>
+
+                      {showPaymentModal && selectedBooking && (
+                        <PaymentsMethod
+                          booking={selectedBooking}
+                          onClose={() => { setShowPaymentModal(false); setSelectedBooking(null); }}
+                          onSuccess={() => { setShowPaymentModal(false); loadBookings(); }}
+                        />
                       )}
                     </div>
                   </div>

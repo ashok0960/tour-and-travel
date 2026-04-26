@@ -1,17 +1,49 @@
-# Django
+# ── Django ──
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.py[cod]
 db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+*.log
+
+# ── Environment ──
+.env
+.env.*
+!.env.example
+
+# ── Virtual Environments ──
 env/
 venv/
-.env
+.venv/
 
-# React
-frontend/node_modules/
+# ── React / Node ──
 node_modules/
-frontend/build/
-build/
+Frontend/node_modules/
+Frontend/dist/
+Frontend/build/
 dist/
+build/
 
-# System
+# ── Docker ──
+docker-compose.override.yml
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ──
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Python ──
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/

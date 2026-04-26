@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { tours as toursAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AddEditTour = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Detect if coming from vendor routes — return to vendor dashboard after save
+  const isVendorRoute = location.pathname.startsWith('/vendor');
+  const returnPath = isVendorRoute ? '/vendor/dashboard' : '/admin/tours';
   const [loading, setLoading] = useState(false);
   const [fetchingTour, setFetchingTour] = useState(!!id);
   const [formData, setFormData] = useState({
@@ -14,6 +18,7 @@ const AddEditTour = () => {
     location: '',
     price: '',
     duration: '',
+    available_seats: '',
     image: null
   });
   const [previewImage, setPreviewImage] = useState(null);
@@ -22,7 +27,6 @@ const AddEditTour = () => {
     if (id) {
       fetchTour();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchTour = async () => {
@@ -35,14 +39,15 @@ const AddEditTour = () => {
         location: tour.location,
         price: tour.price,
         duration: tour.duration,
+        available_seats: tour.available_seats,
         image: null
       });
-      if (tour.image) {
-        setPreviewImage(`http://127.0.0.1:8000${tour.image}`);
+      if (tour.image_url) {
+        setPreviewImage(tour.image_url);
       }
     } catch {
       toast.error('Failed to fetch tour details');
-      navigate('/admin/tours');
+      navigate(returnPath);
     } finally {
       setFetchingTour(false);
     }
@@ -73,28 +78,42 @@ const AddEditTour = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.title || !formData.description || !formData.location || 
-        !formData.price || !formData.duration) {
-      toast.error('Please fill in all fields');
+
+    if (!formData.title || !formData.description || !formData.location ||
+        !formData.price || !formData.duration || !formData.available_seats) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
     setLoading(true);
 
     try {
+      const data = new FormData();
+      data.append('title', formData.title);
+      data.append('description', formData.description);
+      data.append('location', formData.location);
+      data.append('price', formData.price);
+      data.append('duration', formData.duration);
+      data.append('available_seats', formData.available_seats);
+      // Only append image if a new file was selected
+      if (formData.image instanceof File) {
+        data.append('image', formData.image);
+      }
+
       if (id) {
-        await toursAPI.update(id, formData);
+        await toursAPI.update(id, data);
         toast.success('Tour updated successfully');
       } else {
-        await toursAPI.create(formData);
+        await toursAPI.create(data);
         toast.success('Tour created successfully');
       }
-      navigate('/admin/tours');
+      navigate(returnPath);
     } catch (error) {
-      toast.error(error.response?.data?.message || `Failed to ${id ? 'update' : 'create'} tour`);
-      console.error('Error saving tour:', error);
+      const errData = error.response?.data;
+      const msg = errData
+        ? (typeof errData === 'string' ? errData : Object.values(errData).flat()[0])
+        : `Failed to ${id ? 'update' : 'create'} tour`;
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -139,7 +158,7 @@ const AddEditTour = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., Paris Explorer"
+                placeholder="e.g., hiking, treaking ...."
               />
             </div>
 
@@ -155,15 +174,15 @@ const AddEditTour = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., Paris, France"
+                placeholder="e.g., Nepal some place ..."
               />
             </div>
 
-            {/* Price and Duration */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Price, Duration, and Available Seats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  Price (USD) *
+                  Price (Rs) *
                 </label>
                 <input
                   type="number"
@@ -190,6 +209,21 @@ const AddEditTour = () => {
                   min="1"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., 7"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Available Seats *
+                </label>
+                <input
+                  type="number"
+                  name="available_seats"
+                  value={formData.available_seats}
+                  onChange={handleChange}
+                  required
+                  min="1"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., 20"
                 />
               </div>
             </div>
@@ -278,7 +312,7 @@ const AddEditTour = () => {
             <div className="flex gap-4 pt-4">
               <button
                 type="button"
-                onClick={() => navigate('/admin/tours')}
+                onClick={() => navigate(returnPath)}
                 className="flex-1 px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
               >
                 Cancel
