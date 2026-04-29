@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import BasePermission
 from .models import SupportTicket
 from .serializers import SupportTicketSerializer
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class IsAdmin(BasePermission):
@@ -107,3 +109,81 @@ class DeleteTicketView(APIView):
 
         ticket.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ContactView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        name = request.data.get('name', '').strip()
+        email = request.data.get('email', '').strip()
+        subject = request.data.get('subject', '').strip()
+        message = request.data.get('message', '').strip()
+
+        if not all([name, email, subject, message]):
+            return Response({'error': 'All fields are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Send email to admin
+            admin_email = 'ashokkumarkarki5@gmail.com'
+            email_subject = f'New Contact Form Submission: {subject}'
+            email_body = f"""
+Hi Admin,
+
+A new contact form submission has been received:
+
+Name: {name}
+Email: {email}
+Subject: {subject}
+Message:
+{message}
+
+Please reply to: {email}
+
+Best regards,
+Mystic Path Travel Co.
+            """
+
+            send_mail(
+                email_subject,
+                email_body,
+                settings.DEFAULT_FROM_EMAIL,
+                [admin_email],
+                fail_silently=False,
+            )
+
+            # Send confirmation email to user
+            user_subject = 'We received your message - Mystic Path Travel Co.'
+            user_body = f"""
+Hi {name},
+
+Thank you for contacting us! We have received your message and will get back to you as soon as possible.
+
+Your message details:
+Subject: {subject}
+Message: {message}
+
+We appreciate your inquiry and look forward to assisting you.
+
+Best regards,
+Mystic Path Travel Co. Support Team
+            """
+
+            send_mail(
+                user_subject,
+                user_body,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            return Response(
+                {'message': 'Thank you! Your message has been sent successfully. We will get back to you soon.'},
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to send message: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

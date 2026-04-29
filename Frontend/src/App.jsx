@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 import Navbar from './components/Navbar';
@@ -30,10 +30,28 @@ import KhaltiVerify from './pages/KhaltiVerify';
 import Profile from './pages/Profile';
 
 import { authAPI } from './services/api';
+import PrivacyPolicy from './Terms/PrivacyPolicy';
+import TermsUse from './Terms/TermsUse';
+import ContactUs from './Terms/ContactUs';
+import FAQ from './Terms/FAQ';
+import CookiePolicy from './Terms/CookiePolicy';
+import SupportModal from './components/SupportModal';
+import Support from './pages/Support';
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Scroll to top on route change
+  const ScrollToTop = () => {
+    const { pathname } = useLocation();
+
+    useEffect(() => {
+      window.scrollTo(0, 0);
+    }, [pathname]);
+
+    return null;
+  };
 
   const checkAuth = async () => {
     const token = localStorage.getItem('access_token');
@@ -73,6 +91,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Layout user={user} setUser={setUser}>
         <Toaster position="top-right" />
         <Routes>
@@ -123,6 +142,12 @@ function App() {
           <Route path="/payment/cancel" element={<PaymentCancel />} />
           <Route path="/payment/khalti/verify" element={<KhaltiVerify />} />
           <Route path="/paymentmethod" element={<PaymentsMethod />} />
+          <Route path="/privacy" element={<PrivacyPolicy/>}/>
+          <Route path="/terms" element={<TermsUse/>}/>
+          <Route path="/contact" element={<ContactUs/>}/>
+          <Route path="/faq" element={<FAQ/>}/>
+          <Route path="/cookie-policy" element={<CookiePolicy/>}/>
+          <Route path='/support' element={<Support/>}/>
         </Routes>
       </Layout>
     </Router>

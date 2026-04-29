@@ -84,4 +84,8 @@ export const supportAPI = {
   deleteTicket: (id) => api.delete(`/support/${id}/delete/`),
 };
 
+export const contactAPI = {
+  sendMessage: (data) => api.post('/contact/', data),
+};
+
 export default api;

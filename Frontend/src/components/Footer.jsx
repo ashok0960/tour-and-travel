@@ -9,7 +9,7 @@ const Footer = () => {
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
+
           {/* Company Info Section */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -17,33 +17,33 @@ const Footer = () => {
               <h3 className="text-2xl font-bold">Mystic Path Travel Co.</h3>
             </div>
             <p className="text-gray-300 leading-relaxed">
-              Your trusted partner for unforgettable travel experiences around the world. 
+              Your trusted partner for unforgettable travel experiences around the world.
               We offer the best tour packages at competitive prices.
             </p>
             <div className="flex space-x-4 pt-2">
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors duration-300"
                 aria-label="Facebook"
               >
                 <span className="text-xl">📘</span>
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors duration-300"
                 aria-label="Twitter"
               >
                 <span className="text-xl">🐦</span>
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors duration-300"
                 aria-label="Instagram"
               >
                 <span className="text-xl">📷</span>
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors duration-300"
                 aria-label="LinkedIn"
               >
@@ -58,7 +58,7 @@ const Footer = () => {
               Quick Links
               <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-blue-500 mt-2"></span>
             </h4>
-            <ul className="space-y-3">
+            <ul className="">
               <li>
                 <Link to="/" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
                   🏠 Home
@@ -90,29 +90,29 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
+                <Link to="/support" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
                   ❓ Help Center
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
+                <Link to="/contact" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
                   📧 Contact Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
+                <Link to="/faq" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
                   📖 FAQ
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
+                <Link to="/terms" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
                   ⚖️ Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
+                <Link to="/privacy" className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
                   🔒 Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -120,7 +120,7 @@ const Footer = () => {
           {/* Contact & Newsletter Section */}
           <div>
             <h4 className="text-lg font-semibold mb-4 relative">
-              Stay Updated
+              Direct Inqury
               <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-blue-500 mt-2"></span>
             </h4>
             <p className="text-gray-300 mb-4 text-sm">
@@ -128,12 +128,12 @@ const Footer = () => {
             </p>
             <form className="space-y-3">
               <div className="flex">
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   placeholder="Your email address"
                   className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:border-blue-500 text-white text-sm"
                 />
-                <button 
+                <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-r-lg transition-colors duration-300"
                 >
@@ -149,7 +149,7 @@ const Footer = () => {
                 <span className="mr-2">✉️</span>ashokkumarkarki5@gmail.com
               </p>
               <p className="text-gray-300 text-sm flex items-center">
-                <span className="mr-2">📍</span> 123 Travel Street, Adventure City
+                <span className="mr-2">📍</span>Imadol, Lalitpur
               </p>
             </div>
           </div>
@@ -161,20 +161,21 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-400 text-sm">
-              © {currentYear} Mystic Path Travel Co.. All rights reserved. Made with 
-              <span className="text-red-500 mx-1">❤️</span> 
+              © {currentYear} Mystic Path Travel Co.. All rights reserved. Made with
+              <span className="text-red-500 mx-1">❤️</span>
               for travelers around the world.
             </p>
             <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
-                Terms of Use
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
+              <Link to="/privacy" className='text-gray-400 hover:text-white text-sm transition-colors'>
+                  Privacy Policy
+              </Link>
+
+              <Link to="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
+                Terms of Services
+              </Link>
+              <Link to="/cookie-policy" className="text-gray-400 hover:text-white text-sm transition-colors">
                 Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>
