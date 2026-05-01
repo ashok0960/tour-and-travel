@@ -4,5 +4,5 @@ A Tour and Travel Management System that allows users to explore destinations, b
 
 Screenshort:
 
-https://github.com/ashok0960/tour-and-travel/blob/53e218ca3624fe896c4a8437c27963ad20deb994/first.png
-![Home]()
+![Home](https://github.com/ashok0960/tour-and-travel/blob/53e218ca3624fe896c4a8437c27963ad20deb994/first.png
+)
