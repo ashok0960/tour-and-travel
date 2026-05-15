@@ -9,6 +9,12 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def env_bool(name, default=False):
+    value = config(name, default=str(default))
+    return str(value).strip().lower() in {'1', 'true', 'yes', 'on', 'debug'}
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config(
     'SECRET_KEY',
@@ -16,11 +22,7 @@ SECRET_KEY = config(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config(
-    'DEBUG',
-    default=False,
-    cast=bool
-)
+DEBUG = env_bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = [
     'localhost',
