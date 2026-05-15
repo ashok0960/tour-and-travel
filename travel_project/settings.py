@@ -16,13 +16,10 @@ def env_bool(name, default=False):
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config(
-    'SECRET_KEY',
-    default='django-temporary-key'
-)
+SECRET_KEY = config('SECRET_KEY', default='django-temporary-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_bool('DEBUG', default=False)
+DEBUG = env_bool('DEBUG', default='False')
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -140,7 +137,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    config('FRONTEND_URL', default='http://localhost:5173').strip(),
+    config('FRONTEND_URL', default='http://localhost:5173', cast=str).strip(),
     'http://localhost',
     'http://localhost:80',
     'http://localhost:5173',
@@ -183,13 +180,13 @@ AUTH_USER_MODEL = 'accounts.User'
 # The config() function looks for environment variables with these NAMES
 # If the environment variable doesn't exist, it uses the default value
 
-STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
-STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
-STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173').strip()
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='', cast=str)
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='', cast=str)
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='', cast=str)
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173', cast=str).strip()
 
 # Khalti Configuration
 # Get your key from: https://test-admin.khalti.com/#/join
-KHALTI_SECRET_KEY = config('KHALTI_SECRET_KEY', default='').strip()
+KHALTI_SECRET_KEY = config('KHALTI_SECRET_KEY', default='', cast=str).strip()
 KHALTI_INITIATE_URL = 'https://a.khalti.com/api/v2/epayment/initiate/'
 KHALTI_VERIFY_URL = 'https://a.khalti.com/api/v2/epayment/lookup/'
